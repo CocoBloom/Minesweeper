@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minesweeper</title>
+    <!-- http://proger.i-forge.net/The_smallest_transparent_pixel/ -->
+    <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
+</head>
+<body>
+<div class="stats">
+    <input type="text" id="mine-left-counter" disabled value="{{ mines }}">
+    <input type="text" id="elapsed-time-counter" disabled value="0">
+</div>
+<div class="game-field" style="width: {{ 16*cols }}px; height: {{ 16*rows }}px">
+    {% for row_index in range(rows) %}
+        <div class="row">
+            {% for col_index in range(cols) %}
+                <div
+                        class="field {{ 'mine' if (row_index * cols + col_index) in mine_places else '' }}"
+                        data-row="{{ row_index }}"
+                        data-col="{{ col_index }}"></div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html>
