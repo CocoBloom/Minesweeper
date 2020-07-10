@@ -5,22 +5,173 @@
     <title>Minesweeper</title>
     <!-- http://proger.i-forge.net/The_smallest_transparent_pixel/ -->
     <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
+    <style>.stats {
+    width: 160px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.stats input {
+    width: 50px;
+}
+
+.game-field {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.game-field .row {
+    height: 16px;
+    display: flex;
+}
+
+.game-field .row .field {
+    height: 16px;
+    width: 16px;
+    background: url('/static/img/closed-field.png');
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}</style>
 </head>
 <body>
+<script type="text/javascript">
+    let flagged = [];
+    function whichButton(event) {
+        let name = event.target;
+        console.log("name:",name)
+        let x = name.getAttribute("data-row");
+        let y = name.getAttribute("data-col");
+        let fields = document.getElementsByClassName('field');
+        let fields_mines = document.getElementsByClassName('field mine');
+        let place_2= get_place(fields=fields,x=x,y=y);
+        console.log("place_2:",place_2);
+        if (event.button === 2) {
+                no_contextMenu()
+                flagging(fields=fields, name=name, x=x, y=y ,place_2=place_2)
+            }
+        else if (event.button === 0) {
+            let neighbors = get_neighbors(place=place_2,y=y,x=x);
+            let mines_in_neighbors = check_neighbors(neighbors=neighbors);
+            field_opening(mines_in_neighbors=mines_in_neighbors, place=place_2, x=x, y=y, fields=fields);
+            }
+    }
+
+    function get_place(fields,x,y) {
+        for (let i=0; i<fields.length; i++) {
+            if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)){
+                return i + 1;
+            }
+
+        }
+    }
+    function no_contextMenu() {
+        let noContext = document.getElementById('noContextMenu');
+        noContext.addEventListener('contextmenu', event => {
+            event.preventDefault();
+            });
+    }
+    function flagging(fields,name,x,y,place_2) {
+        for (i = 0; i < fields.length; i++) {
+            console.log("background",fields[i].style.background);
+            if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
+                if ((fields[i].style.background !== 'url("/static/img/flag.png")') && (flagged.length < {{ mines }})) {
+                    if (fields[i].style.textAlign !== "center") {
+                        fields[i].style.background = "url('/static/img/flag.png')";
+                        flagged.push(place_2);
+                    }
+                } else if ((fields[i].style.background === 'url("/static/img/flag.png")') && (flagged.length < {{ mines }} +1)) {
+                    fields[i].style.background = "url('/static/img/closed-field.png')";
+                    flagged.splice(flagged.indexOf(place_2), 1);
+                } else {
+                    alert("you don't have more mine");
+                }
+                console.log("flaggged", flagged);
+            }
+        }
+        return flagged;
+    }
+
+    function get_neighbors(place,x,y) {
+        let nums = [-11,-10,-9,-1,1,9,10,11];
+        let neighbors = [];
+        for (i=0; i <nums.length; i++) {
+            let num = place + nums[i];
+            if ((-1 < num) && (num < ({{rows}} * {{ cols }}))) {
+                if ((place % 10 === 0) && (nums[i] !== -1) && (nums[i] !== -11) && (nums[i] !== 9)) {
+                    neighbors.push(num);
+                } else if (((place + 1) % 10 === 0) && (nums[i] !== 1) && (nums[i] !== 11) && (nums[i] !== -9)) {
+                    neighbors.push(num);
+                } else {
+                    neighbors.push(num);
+                }
+            }
+        }
+        let result = neighbors.sort(compareNumbers);
+        return result;
+    }
+
+    function compareNumbers(a, b) {
+            return a - b;
+        }
+
+    function check_neighbors(neighbors) {
+        console.log("neighb:",neighbors);
+        console.log("mineplaces:",{{ mine_places }})
+        let mines_in_neighbors = [];
+        for (let i=0;i<neighbors.length;i++) {
+            for (let j=0; j< {{mine_places}}.length; j++) {
+                if ( neighbors[i] === {{mine_places}}[j]) {
+                mines_in_neighbors.push(neighbors[i]);
+                }
+            }
+        }
+        return mines_in_neighbors;
+    }
+     function field_opening(mines_in_neighbors,place,x,y,fields) {
+         for (i = 0; i < fields.length; i++) {
+             if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
+                 if (fields[i].style.background !== 'url("/static/img/flag.png")') {
+                     let found_mine = ({{ mine_places }}).includes(place);
+                     if (found_mine === false) {
+                         if (mines_in_neighbors.length !== 0) {
+                             fields[i].style.background = "url('/static/img/open-field.png')";
+                             fields[i].innerHTML = mines_in_neighbors.length;
+                         } else {
+                             fields[i].style.background = "url('/static/img/open-field.png')";
+                         }
+                     } else {
+                         fields[i].style.background = "url('/static/img/mine.png')";
+                     }
+                     fields[i].style.textAlign = "center";
+                 } else if (fields[i].style.background === 'url("/static/img/flag.png")') {
+                     alert("You must to remove the flag at first.");
+                 }
+             }
+         }
+     }
+
+
+    </script>
+
 <div class="stats">
     <input type="text" id="mine-left-counter" disabled value="{{ mines }}">
     <input type="text" id="elapsed-time-counter" disabled value="0">
 </div>
-<div class="game-field" style="width: {{ 16*cols }}px; height: {{ 16*rows }}px">
+<div class="game-field" id="noContextMenu" style="width: {{ 16*cols }}px; height: {{ 16*rows }}px">
     {% for row_index in range(rows) %}
         <div class="row">
             {% for col_index in range(cols) %}
-                <div
-                        class="field {{ 'mine' if (row_index * cols + col_index) in mine_places else '' }}"
-                        data-row="{{ row_index }}"
-                        data-col="{{ col_index }}"></div>
+                <div class="field {{ 'mine' if (row_index * cols + col_index) in mine_places else '' }}"
+                     data-row="{{ row_index }}"
+                     data-col="{{ col_index }}"
+                     onmousedown="whichButton(event)"
+                    >
+                </div>
             {% endfor %}
         </div>
     {% endfor %}
