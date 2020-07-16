@@ -5,51 +5,25 @@
     <title>Minesweeper</title>
     <!-- http://proger.i-forge.net/The_smallest_transparent_pixel/ -->
     <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
-    <style>.stats {
-    width: 160px;
-    margin: 0 auto;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.stats input {
-    width: 50px;
-}
-
-.game-field {
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-}
-
-.game-field .row {
-    height: 16px;
-    display: flex;
-}
-
-.game-field .row .field {
-    height: 16px;
-    width: 16px;
-    background: url('/static/img/closed-field.png');
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}</style>
 </head>
+
+
 <body>
 <script type="text/javascript">
+    document.body.addEventListener(("mousedown"),whichButton_2);
     let flagged = [];
     let background_list = [];
-    console.log("backgroundlist:", background_list)
-    let time = [];
-    document.body.addEventListener(("mousedown"),whichButton_2);
-
+    let seconds = 0;
+    let minutes = 0;
+    let display_seconds = 0;
+    let display_minutes = 0;
+    let interval = null;
+    let status = "stopped"
 
     function whichButton_2(event) {
-        let name_2 = event.target;
-        console.log("name_wB_2",name_2);
+        start_stop()
         if (event.button === 2) {
             no_contextMenu()
         }
@@ -57,14 +31,12 @@
 
     function whichButton(event) {
         let name = event.target;
-        console.log("name:",name)
         let x = name.getAttribute("data-row");
         let y = name.getAttribute("data-col");
         let fields = document.getElementsByClassName('field');
         let place_2= get_place(fields=fields,x=x,y=y);
-        console.log("place_2:",place_2);
         if (event.button === 2) {
-                flagging(fields=fields, name=name, x=x, y=y ,place_2=place_2)
+            flagging(fields=fields, name=name, x=x, y=y ,place_2=place_2)
             }
         else if (event.button === 0) {
             let neighbors = get_neighbors(place_2,x, y,fields=fields);
@@ -91,7 +63,6 @@
 
     function flagging(fields,name,x,y,place_2) {
         for (i = 0; i < fields.length; i++) {
-            console.log("background",fields[i].style.background);
             if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
                 if ((fields[i].style.background !== 'url("/static/img/flag.png")') && (flagged.length < {{ mines }})) {
                     if (fields[i].style.textAlign !== "center") {
@@ -143,13 +114,9 @@
     }
 
      function field_opening(mines_in_neighbors,place,x,y,fields,background_list,neighbors) {
-         console.log("place IN FIEL OPENING:",place);
-         console.log("neighbors:",neighbors);
-         console.log("background list:",background_list)
          let attribute = "onmousedown";
          let attribute_2 = "onclick"
          for (i = 0; i < fields.length; i++) {
-             console.log("FOR CIKLUS KEZDETE")
              if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
                  if (fields[i].style.background !== 'url("/static/img/flag.png")') {
                      let found_mine = ({{ mine_places }}).includes(place);
@@ -164,12 +131,10 @@
                              for (j=0; j<neighbors.length;j++) {
                                  if (background_list.includes(neighbors[j]) === false) {
                                      let index = j;
-                                     console.log("recurzsio for loop",index)
                                      let x_auto = fields[neighbors[j]].getAttribute("data-row");
                                      let y_auto = fields[neighbors[j]].getAttribute("data-col");
                                      let neighbors_of_neighbor = get_neighbors(neighbors[j], x_auto, y_auto, fields = fields);
                                      let mines_in_neighbors_of_neighbor = check_neighbors(neighbors_of_neighbor);
-                                     console.log("neighbor[j]:", neighbors[index], "x_auto:", x_auto, ",y_auto:", y_auto, ",neighbors of neighbor:", neighbors_of_neighbor, ",minesin n _of n:", mines_in_neighbors_of_neighbor)
                                      field_opening(mines_in_neighbors_of_neighbor, neighbors[index], x_auto, y_auto, fields, background_list, neighbors_of_neighbor);
                                      j=index
                                  }
@@ -186,7 +151,8 @@
                              fields[i].style.textAlign = "center";
                              is_loose(fields = fields);
                              alert("you loose this game");
-                             remove_attribute(attribute, fields = fields)
+                             remove_attribute(attribute, fields = fields);
+                         status="started"
                          }
                      } else if (fields[i].style.background === 'url("/static/img/flag.png")') {
                          alert("You must to remove the flag at first.");
@@ -207,7 +173,6 @@
   function is_win(opened_fields) {
         let result;
         let open_fields = ({{ rows }} * {{ cols }}) - {{ mines }};
-        console.log("opened_fields:",opened_fields.sort());
         if (opened_fields.length === open_fields) {
             result = 'true'
         } else {
@@ -220,7 +185,6 @@ function is_loose(fields) {
             for (j=0; j<({{ mine_places }}).length; j++) {
                 if ( i === ({{ mine_places }})[j]) {
                     fields[i].style.background = "url('/static/img/mine.png')";
-
                 }
             }
         }
@@ -231,15 +195,38 @@ function update_mines_counter () {
     mines_2.value = ( {{ mines }} - flagged.length)
 }
 
-function get_seconds(fields) {
-  let d = new Date();
-  let s = d.getSeconds();
-  time[0] = s;
-  console.log("time:",time)
-  document.getElementById("elapsed-time-counter").value = s;
-  let t = setTimeout(get_seconds);
+function stop_watch() {
+    seconds++
+    if (seconds / 60 === 1) {
+        seconds =0;
+        minutes++;
+    }
+    if (seconds < 10 ) {
+        display_seconds = "0" + seconds.toString();
+    } else {
+        display_seconds = seconds;
+    }
 
+    if (minutes < 10 ) {
+        display_minutes = "0" + minutes.toString()
+    } else {
+        display_minutes = minutes
+    }
+    document.getElementById("elapsed-time-counter").value = display_minutes + ":" + display_seconds;
   }
+
+
+function start_stop() {
+    if(status === "stopped"){
+        interval = window.setInterval(stop_watch, 1000);
+        status = "started";
+    }
+    else{
+        window.clearInterval(interval);
+        status = "stopped";
+    }
+
+}
 
 
 function remove_attribute(attribute,fields) {
@@ -254,7 +241,7 @@ function remove_attribute(attribute,fields) {
 
 <div class="stats">
     <input type="text" id="mine-left-counter" disabled value="{{ mines }}">
-    <input type="text" onmousedown="get_seconds()" id="elapsed-time-counter" disabled value="0">
+    <input type="text" id="elapsed-time-counter" disabled value="0">
 </div>
 <div class="game-field" id="noContextMenu" style="width: {{ 16*cols }}px; height: {{ 16*rows }}px">
     {% for row_index in range(rows) %}
