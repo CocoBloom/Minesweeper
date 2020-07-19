@@ -9,17 +9,13 @@
     let count =0;
 
     function whichButton_2(event) {
-        console.log("ssss",status)
         if (event.button === 2) {
             no_contextMenu()
         }
         if (count === 1) {
             start_stop()
         }
-                console.log("jjjjj",status)
-
     }
-
 
     function stop_watch() {
     seconds++
@@ -69,10 +65,9 @@ function start_stop() {
     function send_data() {
         let datas_form = []
         let x = document.getElementById('form').elements;
-        console.log("x",x)
         for ( let i=0; i < x.length; i++) {
             datas_form.push(x[i].value)
-        } console.log("datasfrom",datas_form)
+        }
         return datas_form
     }
 
@@ -82,7 +77,6 @@ function start_stop() {
     function whichButton(event) {
         count++
         let fields = document.getElementsByClassName('field');
-        let flagged = get_flagged(fields);
         let background_list = get_background_list(fields);
         let mine_places = get_mine_places();
         let mines = mine_places.length
@@ -94,7 +88,8 @@ function start_stop() {
         let y = name.getAttribute("data-col");
         let place= get_place(fields,x,y);
         if (event.button === 2) {
-             no_contextMenu()
+             no_contextMenu();
+             let flagged = get_flagged(fields);
             flagging(fields, name, x, y ,place,mines,flagged)
             }
         else if (event.button === 0) {
@@ -134,7 +129,7 @@ function start_stop() {
             if (fields[i].style.background === 'url("/static/img/flag.png")') {
                 flagged.push(i);
             }
-        } return flagged.length
+        } return flagged
     }
 
     function get_rows(fields) {
@@ -145,7 +140,6 @@ function start_stop() {
                 rows.push(row);
             }
         }
-        console.log("rows",rows)
         return rows.length
     }
 
@@ -157,7 +151,6 @@ function start_stop() {
                 cols.push(col);
             }
         }
-        console.log("cols",cols)
         return cols.length
     }
 
@@ -166,21 +159,20 @@ function start_stop() {
         console.log("flaged in flagging",flagged)
         for (i = 0; i < fields.length; i++) {
             if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
-                if ((fields[i].style.background !== 'url("/static/img/flag.png")') && (flagged < mines)) {
+                if ((fields[i].style.background !== 'url("/static/img/flag.png")') && (flagged.length < mines)) {
                     if (fields[i].style.textAlign !== "center") {
                         fields[i].style.background = "url('/static/img/flag.png')";
-                        newest_flagged = get_flagged(fields)
+                        let newest_flagged = get_flagged(fields)
                         update_mines_counter(mines,newest_flagged);
                     }
-                } else if ((fields[i].style.background === 'url("/static/img/flag.png")') && (flagged < mines +1)) {
+                } else if ((fields[i].style.background === 'url("/static/img/flag.png")') && (flagged.length < mines +1)) {
                     fields[i].style.background = "url('/static/img/closed-field.png')";
                     flagged.splice(flagged.indexOf(place_2), 1);
-                    let newest_flagged = get_flagged(fields)
+                    let newest_flagged = get_flagged(fields);
                     update_mines_counter(mines,newest_flagged);
                 } else {
                     alert("you don't have more mine");
                 }
-                console.log("flaggged", flagged);
             }
         }
         return flagged;
@@ -198,8 +190,7 @@ function start_stop() {
                 if ((neighb_place !== place) && (neighb_place !== undefined)) {
                     neighbors.push(neighb_place);}
                 }
-                }
-        return neighbors
+            } return neighbors
         }
 
     function compareNumbers(a, b) {
@@ -219,8 +210,6 @@ function start_stop() {
      function field_opening(mines_in_neighbors,place,x,y,fields,background_list,neighbors,mine_places,rows,cols,mines,status) {
          let attribute = "onmousedown";
          let attribute_2 = "onclick";
-                 console.log("oooooo",status)
-
          for (i = 0; i < fields.length; i++) {
              if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
                  if (fields[i].style.background !== 'url("/static/img/flag.png")') {
@@ -301,7 +290,7 @@ function is_loose(fields,mine_places) {
 
 function update_mines_counter (mines,flagged) {
     let mines_2= document.getElementById("mine-left-counter");
-    mines_2.value = (mines - flagged)
+    mines_2.value = (mines - flagged.length)
 }
 
 
