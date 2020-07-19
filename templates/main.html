@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<form action="{{ url_for('game') }}" method="GET">
+<form id = "form" action="{{ url_for('game') }}" method="GET">
     <label for="cols">Cols:</label>
     <input type="number" id="cols" name="cols" value="10">
     <label for="rows">Rows:</label>
@@ -20,5 +20,7 @@
 
     <input type="submit" value="Start"/>
 </form>
+
+
 </body>
 </html>

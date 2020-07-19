@@ -14,7 +14,6 @@ def game():
     rows = int(request.args.get('rows'))
     cols = int(request.args.get('cols'))
     mines = int(request.args.get('mines'))
-
     mine_places = sorted(sample(range(0, rows * cols - 1), mines))
     print("mines-placesSORTED:",sorted(mine_places))
     return render_template('game.html',
