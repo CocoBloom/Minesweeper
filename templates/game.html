@@ -16,15 +16,13 @@
     <input type="text" id="mine-left-counter" disabled value="{{ mines }}">
     <input type="text" id="elapsed-time-counter" disabled value="0">
 </div>
-<div class="game-field" id="noContextMenu"  style="width: {{ 16*cols }}px; height: {{ 16*rows }}px">
+<div class="game-field" id="noContextMenu"  >
     {% for row_index in range(rows) %}
         <div class="row" data-rows = "{{ rows }}" data-cols = "{{ cols }}" >
             {% for col_index in range(cols) %}
                 <div class="field {{ 'mine' if (row_index * cols + col_index) in mine_places else '' }}"
                      data-row="{{ row_index }}"
                      data-col="{{ col_index }}"
-                     onmousedown="whichButton(event)"
-
                     >
                 </div>
             {% endfor %}
