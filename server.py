@@ -8,20 +8,17 @@ app = Flask(__name__)
 def main():
     return render_template('main.html')
 
-
 @app.route('/game')
 def game():
     rows = int(request.args.get('rows'))
     cols = int(request.args.get('cols'))
     mines = int(request.args.get('mines'))
     mine_places = sorted(sample(range(0, rows * cols - 1), mines))
-    print("mines-placesSORTED:",sorted(mine_places))
     return render_template('game.html',
                            rows=rows,
                            cols=cols,
                            mines=mines,
                            mine_places=mine_places)
-
 
 if __name__ == '__main__':
     app.run()
