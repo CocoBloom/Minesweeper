@@ -1,63 +1,50 @@
-document.body.addEventListener(("mousedown"), whichButton_2);
+var interval = 0;
 
-let fields = document.getElementsByClassName('field');
-for (const field of fields) {
-    field.addEventListener("onmousedown", whichButton);
+window.onload = function () {
+    init();
 }
 
-let seconds = 0;
-let minutes = 0;
-let display_seconds = 0;
-let display_minutes = 0;
-let interval = null;
-let status = "stopped"
-let count = 0;
-let endOfGame = false;
+function init() {
+    addMouseDownEvent();
+}
 
-function whichButton_2(event) {
+function addMouseDownEvent() {
+    let fields = document.getElementsByClassName('field');
+    for (const field of fields) {
+        field.addEventListener("mousedown", whichButton);
+    }
+}
+
+function whichButton(event) {
+    let event_field = event.target;
+    let fields = document.getElementsByClassName('field');
+    first_click(fields);
+
+    let mine_places = get_mine_places();
+    let number_of_mines = mine_places.length;
+    let actual_field_x = event_field.getAttribute("data-row");
+    let actual_field_y = event_field.getAttribute("data-col");
+    let index_of_field = get_place(fields, actual_field_x, actual_field_y);
+
     if (event.button === 2) {
-        no_contextMenu()
-    }
-    if (count === 1) {
-        start_stop()
+        no_contextMenu();
+        let flagged = get_flagged(fields);
+        flagging(fields, index_of_field, number_of_mines, flagged)
+    } else if (event.button === 0) {
+        let neighbors = get_neighbors(index_of_field, fields);
+        let mines_in_neighbors = check_neighbors(neighbors, mine_places);
+        let background_list = get_background_list(fields);
+        let rows = get_rows(fields);
+        let cols = get_cols(fields);
+        field_opening(mines_in_neighbors, index_of_field, fields, background_list, neighbors, mine_places, rows, cols, number_of_mines);
     }
 }
 
-function stop_watch() {
-    seconds++
-    if (seconds / 60 === 1) {
-        seconds = 0;
-        minutes++;
+function first_click(fields) {
+    if (get_flagged(fields).length + get_background_list(fields).length === 0) {
+        start_timer();
     }
-    if (seconds < 10) {
-        display_seconds = "0" + seconds.toString();
-    } else {
-        display_seconds = seconds;
-    }
-
-    if (minutes < 10) {
-        display_minutes = "0" + minutes.toString()
-    } else {
-        display_minutes = minutes
-    }
-    document.getElementById("elapsed-time-counter").value = display_minutes + ":" + display_seconds;
 }
-
-
-function start_stop() {
-    if (status === "stopped") {
-        interval = window.setInterval(stop_watch, 1000);
-        status = 'started'
-    }
-    else {
-        window.clearInterval(interval);
-        status = 'stopped'
-    }
-
-}
-
-
-
 
 function get_mine_places() {
     let mine_places = []
@@ -66,49 +53,7 @@ function get_mine_places() {
         if (fields[i].className === 'field mine') {
             mine_places.push(i)
         }
-    } return mine_places
-}
-
-
-function send_data() {
-    let datas_form = []
-    let x = document.getElementById('form').elements;
-    for (let i = 0; i < x.length; i++) {
-        datas_form.push(x[i].value)
-    }
-    return datas_form
-}
-
-
-
-
-function whichButton(event) {
-    if(endOfGame) {
-        return;
-    }
-
-    count++
-    let fields = document.getElementsByClassName('field');
-    let background_list = get_background_list(fields);
-    let mine_places = get_mine_places();
-    let mines = mine_places.length
-    let name = event.target;
-    console.log("name", name);
-    let rows = get_rows(fields);
-    let cols = get_cols(fields)
-    let x = name.getAttribute("data-row");
-    let y = name.getAttribute("data-col");
-    let place = get_place(fields, x, y);
-    if (event.button === 2) {
-        no_contextMenu();
-        let flagged = get_flagged(fields);
-        flagging(fields, name, x, y, place, mines, flagged)
-    }
-    else if (event.button === 0) {
-        let neighbors = get_neighbors(place, x, y, fields);
-        let mines_in_neighbors = check_neighbors(neighbors, mine_places);
-        field_opening(mines_in_neighbors, place, x, y, fields, background_list, neighbors, mine_places, rows, cols, mines, status);
-    }
+    } return mine_places;
 }
 
 function get_place(fields, x, y) {
@@ -124,6 +69,41 @@ function no_contextMenu() {
     noContext.addEventListener('contextmenu', event => {
         event.preventDefault();
     });
+}
+
+function start_timer() {
+
+    window.interval = window.setInterval(function () {
+            stop_watch();
+        }, 1000);
+
+    let seconds = 0;
+    let minutes = 0;
+
+    function stop_watch() {
+        let display_seconds = 0;
+        let display_minutes = 0;
+
+        seconds++;
+        if (seconds / 60 === 1) {
+            seconds = 0;
+            minutes++;
+        }
+
+        if (seconds < 10) {
+            display_seconds = "0" + seconds.toString();
+        } else {
+            display_seconds = seconds;
+        }
+
+        if (minutes < 10) {
+            display_minutes = "0" + minutes.toString()
+        } else {
+            display_minutes = minutes
+        }
+
+        document.getElementById("elapsed-time-counter").value = display_minutes + ":" + display_seconds;
+    }
 }
 
 function get_background_list(fields) {
@@ -166,11 +146,9 @@ function get_cols(fields) {
     return cols.length
 }
 
-
-function flagging(fields, name, x, y, place_2, mines, flagged) {
-    console.log("flaged in flagging", flagged)
-    for (i = 0; i < fields.length; i++) {
-        if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
+function flagging(fields, event_place, mines, flagged) {
+    for (let i = 0; i < fields.length; i++) {
+        if (i === event_place) {
             if ((fields[i].style.background !== 'url("/static/img/flag.png")') && (flagged.length < mines)) {
                 if (fields[i].style.textAlign !== "center") {
                     fields[i].style.background = "url('/static/img/flag.png')";
@@ -179,7 +157,7 @@ function flagging(fields, name, x, y, place_2, mines, flagged) {
                 }
             } else if ((fields[i].style.background === 'url("/static/img/flag.png")') && (flagged.length < mines + 1)) {
                 fields[i].style.background = "url('/static/img/closed-field.png')";
-                flagged.splice(flagged.indexOf(place_2), 1);
+                flagged.splice(flagged.indexOf(event_place), 1);
                 let newest_flagged = get_flagged(fields);
                 update_mines_counter(mines, newest_flagged);
             } else {
@@ -190,24 +168,21 @@ function flagging(fields, name, x, y, place_2, mines, flagged) {
     return flagged;
 }
 
-function get_neighbors(place, x, y, fields) {
-    let m_x = parseInt(x);
-    let m_y = parseInt(y);
-    let neighbors = []
-    let neighb_x = [m_x - 1, m_x, m_x + 1];
-    let neighb_y = [m_y - 1, m_y, m_y + 1];
-    for (i = 0; i < neighb_x.length; i++) {
-        for (j = 0; j < neighb_y.length; j++) {
-            let neighb_place = get_place(fields, neighb_x[i].toString(), neighb_y[j].toString());
-            if ((neighb_place !== place) && (neighb_place !== undefined)) {
-                neighbors.push(neighb_place);
+function get_neighbors(actual_field_index, fields) {
+    let int_x = parseInt(fields[actual_field_index].getAttribute("data-row"));
+    let int_y = parseInt(fields[actual_field_index].getAttribute("data-col"));
+    let neighbors = [];
+    let neighbors_of_x = [int_x - 1, int_x, int_x + 1];
+    let neighbors_of_y = [int_y - 1, int_y, int_y + 1];
+    for (i = 0; i < neighbors_of_x.length; i++) {
+        for (j = 0; j < neighbors_of_y.length; j++) {
+            let neighbors_index = get_place(fields, neighbors_of_x[i].toString(), neighbors_of_y[j].toString());
+            if ((neighbors_index !== actual_field_index) && (neighbors_index !== undefined)) {
+                neighbors.push(neighbors_index);
             }
         }
-    } return neighbors
-}
-
-function compareNumbers(a, b) {
-    return a - b;
+    }
+    return neighbors;
 }
 
 function check_neighbors(neighbors, mine_places) {
@@ -220,51 +195,43 @@ function check_neighbors(neighbors, mine_places) {
     return mines_in_neighbors;
 }
 
-function field_opening(mines_in_neighbors, place, x, y, fields, background_list, neighbors, mine_places, rows, cols, mines, status) {
-    let attribute = "onmousedown";
-    let attribute_2 = "onclick";
-    for (i = 0; i < fields.length; i++) {
-        if ((fields[i].getAttribute("data-row") === x) && (fields[i].getAttribute("data-col") === y)) {
+function field_opening(mines_in_neighbors, index_of_field, fields, background_list, neighbors, mine_places, rows, cols, mines) {
+    for (let i = 0; i < fields.length; i++) {
+        if (i === index_of_field) {
             if (fields[i].style.background !== 'url("/static/img/flag.png")') {
-                let found_mine = mine_places.includes(place);
+                let found_mine = mine_places.includes(index_of_field);
                 if (found_mine === false) {
                     if (mines_in_neighbors.length !== 0) {
                         fields[i].style.background = "url('/static/img/open-field.png')";
                         fields[i].innerHTML = mines_in_neighbors.length;
-                        give_to_opened_fields(place, background_list)
+                        give_to_opened_fields(index_of_field, background_list)
                     } else {
                         fields[i].style.background = "url('/static/img/open-field.png')";
-                        give_to_opened_fields(place, background_list);
-                        for (j = 0; j < neighbors.length; j++) {
+                        give_to_opened_fields(index_of_field, background_list);
+                        for (let j = 0; j < neighbors.length; j++) {
                             if (background_list.includes(neighbors[j]) === false) {
                                 let index = j;
-                                let x_auto = fields[neighbors[j]].getAttribute("data-row");
-                                let y_auto = fields[neighbors[j]].getAttribute("data-col");
-                                let neighbors_of_neighbor = get_neighbors(neighbors[j], x_auto, y_auto, fields);
+                                let neighbors_of_neighbor = get_neighbors(neighbors[j], fields);
                                 let mines_in_neighbors_of_neighbor = check_neighbors(neighbors_of_neighbor, mine_places);
-                                field_opening(mines_in_neighbors_of_neighbor, neighbors[index], x_auto, y_auto, fields, background_list, neighbors_of_neighbor, mine_places, rows, cols, mines, status);
-                                j = index
+                                field_opening(mines_in_neighbors_of_neighbor, neighbors[index], fields, background_list, neighbors_of_neighbor, mine_places, rows, cols, mines);
+                                j = index;
                             }
-                            i = place
+                            i = index_of_field;
                         }
                     }
                     fields[i].style.textAlign = "center";
-                    if (is_win(background_list, rows, cols, mines) === 'true') {
+                    if (is_win(background_list, rows, cols, mines)) {
                         alert("you won");
-                        endOfGame = true;
-                        remove_attribute(attribute, fields);
+                        window.clearInterval(window.interval);
+                        remove_attribute();
                     }
                 } else {
                     fields[i].style.background = "url('/static/img/mine.png')";
                     fields[i].style.textAlign = "center";
                     is_loose(fields, mine_places);
-                    alert("you loose this game");
-                    remove_attribute(attribute, fields);
-                    count = 0;
-                    status = "started";
-                    window.clearInterval(interval);
-                    console.log("ssss", status, "count", count)
-
+                    alert("You loose this game :(");
+                    window.clearInterval(window.interval);
+                    remove_attribute();
                 }
             } else if (fields[i].style.background === 'url("/static/img/flag.png")') {
                 alert("You must to remove the flag at first.");
@@ -273,23 +240,16 @@ function field_opening(mines_in_neighbors, place, x, y, fields, background_list,
     }
 }
 
-
 function give_to_opened_fields(place, background_list) {
     if (background_list.includes(place) === false) {
         background_list.push(place);
     }
     return background_list;
-
 }
 
 function is_win(opened_fields, rows, cols, mines) {
-    let result;
     let open_fields = (rows * cols) - mines;
-    if (opened_fields.length === open_fields) {
-        result = 'true'
-    } else {
-        result = 'false'
-    } return result;
+    return opened_fields.length === open_fields;
 }
 
 function is_loose(fields, mine_places) {
@@ -307,12 +267,11 @@ function update_mines_counter(mines, flagged) {
     mines_2.value = (mines - flagged.length)
 }
 
-
-
-function remove_attribute(attribute, fields) {
-    console.log("remove:", attribute)
-    for (i = 0; i < fields.length; i++) {
-        fields[i].removeAttribute(attribute);
+function remove_attribute() {
+    console.log("remove attribute");
+    let fields = document.getElementsByClassName('field');
+    for (const field of fields) {
+        field.removeEventListener('mousedown', whichButton);
     }
 }
 
