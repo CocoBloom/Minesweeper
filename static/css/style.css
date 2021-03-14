@@ -1,3 +1,7 @@
+body {
+    text-align: center;
+}
+
 .stats {
     width: 160px;
     margin: 0 auto;
