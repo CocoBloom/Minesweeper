@@ -9,25 +9,23 @@
     <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
 </head>
 <body>
-<div class="stats">
-    <input type="text" id="mine-left-counter" disabled value="{{ mines }}">
-    <input type="text" id="elapsed-time-counter" disabled value="0">
-</div>
-<div class="game-field" id="noContextMenu"  >
-    {% for row_index in range(rows) %}
-        <div class="row" data-rows = "{{ rows }}" data-cols = "{{ cols }}" >
-            {% for col_index in range(cols) %}
-                <div class="field {{ 'mine' if (row_index * cols + col_index) in mine_places else '' }}"
-                     data-row="{{ row_index }}"
-                     data-col="{{ col_index }}"
-                    >
-                </div>
-            {% endfor %}
-        </div>
-    {% endfor %}
-</div>
-
-<script type="text/javascript" src="/static/js/game.js"></script>
-
+    <div class="stats">
+        <input type="text" id="mine-left-counter" disabled value="{{ mines }}">
+        <input type="text" id="elapsed-time-counter" disabled value="0">
+    </div>
+    <div class="game-field" id="noContextMenu"  >
+        {% for row_index in range(rows) %}
+            <div class="row" data-rows = "{{ rows }}" data-cols = "{{ cols }}" >
+                {% for col_index in range(cols) %}
+                    <div class="field {{ 'mine' if (row_index * cols + col_index) in mine_places else '' }}"
+                         data-row="{{ row_index }}"
+                         data-col="{{ col_index }}"
+                        >
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+    <script type="text/javascript" src="/static/js/game.js"></script>
 </body>
 </html>
